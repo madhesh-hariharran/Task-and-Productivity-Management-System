@@ -27,8 +27,14 @@ def register_user_service(db: Session, user_data: UserCreate):
         raise already_exists_exception
     
     hashed_password = hash_password(user_data.password)
-    new_user = create_user(db, user_data.username, user_data.email, hashed_password)
-
+    new_user = create_user(
+        db, 
+        user_data.username, 
+        user_data.email,
+        hashed_password,
+        role = user_data.role,
+        phone_number = user_data.phone_number
+        )
     return new_user
 
 def login_user_service(db: Session, user_data: OAuth2PasswordRequestForm):
@@ -40,7 +46,7 @@ def login_user_service(db: Session, user_data: OAuth2PasswordRequestForm):
     if not is_password_right:
         raise validation_exception
     
-    access_token = create_access_token(user.id)
+    access_token = create_access_token(user.id, user.role.value)
 
     return {
         "access_token": access_token,
