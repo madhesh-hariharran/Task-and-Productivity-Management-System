@@ -1,5 +1,5 @@
 import client from "./client";
-import type { RegisterPayload, LoginPayload } from "../types/auth";
+import type { RegisterPayload, LoginPayload, UserProfile } from "../types/auth";
 
 export async function registerUser(userData: RegisterPayload){
     const response = await client.post('/auth/register', userData)
@@ -20,7 +20,7 @@ export async function loginUser(loginData: LoginPayload){
     return response.data
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<UserProfile> { //for AuthContext to hydrate on page refresh
     const response = await client.get("/auth/me");
     return response.data;
 }
