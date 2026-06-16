@@ -1,8 +1,13 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isLoggedIn } from "../utils/token";
+import { useAuth } from "../context/useAuth"
 
 function ProtectedRoute(){
-    if (!isLoggedIn()){
+    const { user, isLoading } = useAuth()
+
+    // still hydrating from token so dont redirect yet
+    if (isLoading) return null
+
+    if (!user){
         return <Navigate to = "/login" replace />
     }
     return <Outlet />

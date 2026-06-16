@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/auth";
 import type { UserRole } from "../types/auth";
-import {extractErrorMessage} from "../types/api";
+import {extractErrorMessage} from "../utils/ErrorHandler";
 
 const ROLES: {value: UserRole; label: string; description: string}[] = [
     {

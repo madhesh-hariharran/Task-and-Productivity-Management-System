@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUser } from "../api/auth";
-import { setToken, isLoggedIn } from "../utils/token";
+import { loginUser, getCurrentUser } from "../api/auth";
+import { setToken } from "../utils/token";
+import { useAuth } from "../context/useAuth";
+import { extractErrorMessage } from "../utils/ErrorHandler";
+
 
 function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
+    const navigate = useNavigate();
+    const { user, setAuth } = useAuth()
+
+    // If already logged in, skip login page
     useEffect(() => {
-        if (isLoggedIn()){
-            navigate("/dashboard")
-        }
-    }, [])
+        if (user) navigate("/dashboard")
+    }, [user])
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -24,10 +28,13 @@ function LoginForm() {
         try {
             const response = await loginUser({ email, password });
             setToken(response.access_token);
-            navigate("/dashboard");
-            window.location.reload() //forces react to render the entire app again so Navbar becomes active.
-        } catch(err) {
-            setError("Invalid credentials. Please try again.");
+            
+            const profile = await getCurrentUser()
+            setAuth(profile)
+            
+            navigate("/dashboard")
+        } catch(err: unknown) {
+            setError(extractErrorMessage(err, "Invalid credentials. Please try again."));
         } finally {
             setLoading(false);
         }
