@@ -27,3 +27,11 @@ export type UserProfile = {
     company_domain: string |null
     created_at: string
 }
+
+export type AuthContextType = {
+    user: UserProfile | null
+    role: UserRole | null
+    isLoading: boolean
+    setAuth: (user: UserProfile) => void
+    clearAuth: () => void
+}

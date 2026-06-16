@@ -18,11 +18,14 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response,
     (error) => {
-        const isLoginRequest = error.config?.url?.includes('/auth/login')
+        const isAuthRequest = error.config?.url?.includes('/auth/')
 
-        if (error.response?.status === 401 && !isLoginRequest) {
+        if (error.response?.status === 401 && !isAuthRequest) {
+            // Remove token from storage, then fire a custom event so AuthContext
+            // can clear its state without needing to be imported here
+            // (importing context here would create a circular dependency)
             removeToken()
-            window.location.href = "/login"
+            window.dispatchEvent(new Event('auth:logout'))
         }
         return Promise.reject(error)
     }

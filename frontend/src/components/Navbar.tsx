@@ -1,19 +1,28 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { removeToken } from "../utils/token";
+import { useAuth } from "../context/useAuth";
+import { hasAssignedTasksAccess } from "../utils/roleGuard";
 
 function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { role, clearAuth } = useAuth();
 
     function handleLogout() {
-        removeToken();
+        clearAuth()     // clears context + removes token from local storage
         navigate("/login");
-        window.location.reload()
+        // no window.location.reload() needed - clearAuth triggers re-render
+        // App sees user=null, Navbar unmounts, ProtectedRoute redirects
     }
 
     const navItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Tasks", path: "/tasks" },
+        // Only manager and worker see Assigned Tasks
+        ...(hasAssignedTasksAccess(role)
+            ? [{  label: "Assigned Tasks", path: "/assigned-tasks"}]
+            : [])
+        // add reminders later which would be seen by all roles
+        // {label: "Reminders", path: "/reminders" },
     ];
 
     return (
