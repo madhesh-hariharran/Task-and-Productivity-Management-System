@@ -13,21 +13,3 @@ export type PydanticErrorItem = {
     loc?: (string | number)[]
     type?: string
 }
-
-// Helper to extract a clean error message from any API error
-export function extractErrorMessage(err: unknown, fallback = "Something went wrong. Please try again."): string {
-    const detail = (err as AxiosErrorLike)?.response?.data?.detail
-
-    if (typeof detail === "string") {
-        return detail
-    }
-
-    if (Array.isArray(detail)) {
-        const first = detail[0] as PydanticErrorItem
-        const raw = first?.msg ?? fallback
-        // Pydantic prefixes ValueError messages with "Value error, " — strip it
-        return raw.replace(/^Value error, \s*/i, "")
-    }
-
-    return fallback
-}
