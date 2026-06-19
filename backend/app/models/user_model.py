@@ -17,4 +17,11 @@ class User(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    tasks_relation = relationship("Task", back_populates="user_relation") 
+    # Personal tasks owned by user 
+    tasks_relation = relationship("Task", foreign_keys="Task.user_id", back_populates="user_relation") 
+
+    # Tasks this user assigned to others (manager)
+    assigned_out_relation = relationship("Task", foreign_keys="Task.assigner_id", back_populates="assigner_relation")
+
+    # Tasks assigned to user by others (worker)
+    assigned_in_relation = relationship("Task", foreign_keys="Task.assignee_id", back_populates="assignee_relation")

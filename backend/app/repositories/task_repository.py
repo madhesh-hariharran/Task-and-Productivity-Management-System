@@ -21,7 +21,7 @@ def create_task(db: Session, user_id: int, task_data: TaskCreate):
     return new_task
 
 def get_tasks_by_user(db: Session, user_id: int):
-    tasks = db.query(Task).filter(Task.user_id == user_id).all()
+    tasks = db.query(Task).filter(Task.user_id == user_id, Task.is_assigned == False).all()
     return tasks
 
 def get_task_by_id(db: Session, task_id: int):
@@ -72,7 +72,7 @@ def delete_task(db: Session, task: Task):
     return None
 
 def filter_tasks(db: Session, user_id: int, priority: PriorityEnum| None, status: StatusEnum| None, deadline_before: datetime| None, deadline_after: datetime| None):
-    tasks = db.query(Task).filter(Task.user_id == user_id)
+    tasks = db.query(Task).filter(Task.user_id == user_id, Task.is_assigned == False)
     if priority is not None:
         tasks = tasks.filter(Task.priority == priority)
     if status is not None:
@@ -108,17 +108,17 @@ def sort_tasks(tasks: Query, sort_by: str| None, order: str| None):
 
 def total_count(db: Session, user_id: int):
     return db.query(func.count(Task.id))\
-        .filter(Task.user_id == user_id)\
+        .filter(Task.user_id == user_id, Task.is_assigned == False)\
         .scalar()
 
 def count_by_status(db: Session, user_id: int, status: StatusEnum):
     return db.query(func.count(Task.id))\
-        .filter(Task.user_id == user_id, Task.status == status)\
+        .filter(Task.user_id == user_id, Task.status == status, Task.is_assigned == False)\
         .scalar()
 
 def count_by_priority(db: Session, user_id: int, priority: PriorityEnum):
     return db.query(func.count(Task.id))\
-        .filter(Task.user_id == user_id, Task.priority == priority)\
+        .filter(Task.user_id == user_id, Task.priority == priority, Task.is_assigned == False)\
         .scalar()
 
 def count_overdue(db: Session, user_id: int):
@@ -126,7 +126,8 @@ def count_overdue(db: Session, user_id: int):
         .filter(
             Task.user_id == user_id,
             Task.deadline < datetime.now(),
-            Task.is_completed == False
+            Task.is_completed == False,
+            Task.is_assigned == False
         )\
         .scalar()
 
@@ -139,7 +140,8 @@ def count_due_today(db: Session, user_id: int):
             Task.user_id == user_id,
             Task.is_completed == False,
             Task.deadline >= today_start,
-            Task.deadline <= today_end
+            Task.deadline <= today_end,
+            Task.is_assigned == False
         )\
         .scalar()
 
@@ -152,7 +154,8 @@ def count_due_this_week(db: Session, user_id: int):
             Task.user_id == user_id,
             Task.is_completed == False,
             Task.deadline >= now,
-            Task.deadline <= week_end
+            Task.deadline <= week_end,
+            Task.is_assigned == False
         )\
         .scalar()
 
@@ -161,7 +164,8 @@ def get_completed_tasks(db: Session, user_id: int):
         .filter(
             Task.user_id == user_id,
             Task.is_completed == True,
-            Task.completed_at != None
+            Task.completed_at != None,
+            Task.is_assigned == False
         )\
         .all()
 
