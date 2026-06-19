@@ -38,3 +38,11 @@ def create_user(db: Session, username: str, email: str, hashed_password: str,
 def get_workers_by_domain(db: Session, domain: str):
     workers = db.query(User).filter(User.role == UserRoleEnum.WORKER, User.company_domain == domain).all()
     return workers
+
+def get_company_members_by_domain(db: Session, domain: str):
+    # Returns all company users (managers + workers) in the same domain
+    # Used for the assignee dropdown — personal users excluded since they have no domain
+    return db.query(User).filter(
+        User.company_domain == domain,
+        User.role.in_([UserRoleEnum.MANAGER, UserRoleEnum.WORKER])
+    ).all()
