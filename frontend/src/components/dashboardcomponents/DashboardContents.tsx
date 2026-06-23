@@ -6,34 +6,32 @@ import DashboardStats from "./DashboardStats";
 import DashboardTimeline from "./DashboardTimeline";
 import type { ProductivityReport } from "../../types/report";
 import { getProductivityReport } from "../../api/task";
-import { getCurrentUser } from "../../api/auth";
+import { useAuth } from "../../context/useAuth";
+import { extractErrorMessage } from "../../utils/ErrorHandler";
 
 function DashboardContent() {
+    const { user } = useAuth()
     const [report, setReport] = useState<ProductivityReport | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [hasFetchError, setHasFetchError] = useState<boolean>(false);
-    const [user, setUser] = useState<string | null>(null); 
+    const [fetchErrorMessage, setFetchErrorMessage] = useState<string>("");
 
     useEffect(() => {
         let isMounted = true;
 
         async function fetchReport() {
             try {
-                const [reportData, userData] = await Promise.all([
-                    getProductivityReport(),
-                    getCurrentUser()
-                ]);
-                setUser(userData.username)
+                const reportData = await getProductivityReport();
                 if (isMounted) {
                     setReport(reportData);
                     setHasFetchError(false);
+                    setFetchErrorMessage("");
                 }
-            } catch (err) {
-                console.error("Failed to fetch report", err);
-
+            } catch (err: unknown) {
                 if (isMounted) {
                     setHasFetchError(true);
-                }
+                    setFetchErrorMessage(extractErrorMessage(err, "Unable to load dashboard data."));
+            }
             } finally {
                 if (isMounted) {
                     setLoading(false);
@@ -91,13 +89,12 @@ function DashboardContent() {
     return (
         <div className="min-h-screen w-full bg-gradient-to-r from-indigo-50 via-sky-50 to-orange-50 py-8">
             <div className="max-w-6xl mx-auto px-6 space-y-6 animate-[fadeUp_0.5s_ease-in-out]">
-                <DashboardHeader username={user} />
+                <DashboardHeader username={user?.username ?? null} />
 
                 {hasFetchError && (
                     <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 shadow-sm">
                         <span>
-                            Unable to load your latest dashboard data right now.
-                            Showing a basic view for now.
+                            {fetchErrorMessage} Showing a basic view for now.
                         </span>
                     </div>
                 )}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import client from "../../api/client";
 import type { CreateTaskPayload, Task, UpdateTaskPayload, Priority, Status } from "../../types/task";
 import TasksHeader from "./TasksHeader";
 import TasksToolbar from "./TasksToolbar";
@@ -9,8 +8,10 @@ import TaskFormModal from "./TaskFormModal";
 import EmptyTasks from "./EmptyTasks";
 import TasksLoading from "./TasksLoading";
 import TasksError from "./TasksError";
+import ActionError from "./ActionError";
 import ConfirmModal from "./ConfirmModal";
 import {getTasks, createTask, updateTask, deleteTask} from "../../api/task";
+import { extractErrorMessage } from "../../utils/ErrorHandler";
 
 
 type FilterState = {
@@ -35,6 +36,7 @@ function TasksContent() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
+    const [actionError, setActionError] = useState<string>("");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [modalMode, setModalMode] = useState<"create" | "edit">("create");
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -58,7 +60,6 @@ function TasksContent() {
             setLoading(true);
             setError("");
             try {
-                const endpoint = hasActiveFilters ? "/tasks/filter" : "/tasks/";
                 const params: Record<string, string> = {};
                 if (filters.priority) params.priority = filters.priority;
                 if (filters.status) params.status = filters.status;
@@ -68,8 +69,8 @@ function TasksContent() {
                 if (filters.order) params.order = filters.order;
                 const data = await getTasks(params)
                 setTasks(data);
-            } catch (err: any) {
-                setError(err?.response?.data?.detail || "Failed to load tasks. Please try again.");
+            } catch (err: unknown) {
+                setError(extractErrorMessage(err, "Failed to load tasks. Please try again."));
                 setTasks([]);
             } finally {
                 setLoading(false);
@@ -100,8 +101,8 @@ function TasksContent() {
             await createTask(payload);
             closeModal();
             setRefreshKey(prev => prev + 1);
-        } catch (err: any) {
-            throw new Error(err?.response?.data?.detail || "Failed to create task.");
+        } catch (err: unknown) {
+            throw new Error(extractErrorMessage(err, "Failed to create task."));
         }
     }
 
@@ -111,8 +112,8 @@ function TasksContent() {
             await updateTask(selectedTask.id, payload);
             closeModal();
             setRefreshKey(prev => prev + 1);
-        } catch (err: any) {
-            throw new Error(err?.response?.data?.detail || "Failed to update task.");
+        } catch (err: unknown) {
+            throw new Error(extractErrorMessage(err, "Failed to update task."));
         }
     }
 
@@ -125,8 +126,8 @@ function TasksContent() {
         try {
             await deleteTask(deleteTaskId);
             setRefreshKey(prev => prev + 1);
-        } catch (err: any) {
-            window.alert(err?.response?.data?.detail || "Failed to delete task.");
+        } catch (err: unknown) {
+            setActionError(extractErrorMessage(err, "Failed to delete task."));
         } finally {
             setDeleteTaskId(null);
         }
@@ -144,8 +145,8 @@ function TasksContent() {
         try {
             await updateTask(task.id, payload);
             setRefreshKey(prev => prev + 1);
-        } catch (err: any) {
-            window.alert(err?.response?.data?.detail || "Failed to update task status.");
+        } catch (err: unknown) {
+            setActionError(extractErrorMessage(err, "Failed to update task status."));
         }
     }
 
@@ -173,6 +174,12 @@ function TasksContent() {
                     filters={filters}
                     onChange={handleFilterChange}
                 />
+                {actionError && (
+                    <ActionError
+                        message={actionError}
+                        onDismiss={() => setActionError("")}
+                    />
+                )}
                 {loading ? (
                     <TasksLoading />
                 ) : error ? (
@@ -203,7 +210,7 @@ function TasksContent() {
                 />
             </div>
         </div>
-    );
+    ); 
 }
 
 export default TasksContent;

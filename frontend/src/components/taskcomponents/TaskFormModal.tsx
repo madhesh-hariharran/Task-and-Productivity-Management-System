@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CreateTaskPayload, Task, UpdateTaskPayload, Priority, Status } from "../../types/task";
+import { extractErrorMessage } from "../../utils/ErrorHandler";
 
 type TaskFormModalProps = {
     isOpen: boolean;
@@ -77,9 +78,8 @@ function TaskFormModal({ isOpen, mode, task, onClose, onCreate, onUpdate }: Task
                 };
                 await onUpdate(payload);
             }
-        } catch (err: any) {
-            const message = err?.response?.data?.detail || "Something went wrong";
-            setError(message);
+        } catch (err: unknown) {
+            setError(extractErrorMessage(err, "Something went wrong. Please try again."))
         } finally {
             setSubmitting(false);
         }
