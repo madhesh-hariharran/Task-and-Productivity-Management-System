@@ -13,7 +13,6 @@ from app.repositories.user_repository import get_user_by_id, get_company_members
 from app.models.user_model import User
 from app.enums.user_enum import UserRoleEnum
 
-
 def _to_response(task, db: Session) -> AssignedTaskResponse:
     """
     Task model doesn't store usernames — only IDs.
@@ -87,7 +86,7 @@ def get_assigned_by_me_service(db: Session, current_user: User) -> dict[str, lis
         username = response.assignee_username
         if username not in grouped:
             grouped[username] = []
-            grouped[username].append(response)
+        grouped[username].append(response)
         
     return grouped
 
@@ -112,7 +111,7 @@ def update_assigned_task_service(
             status=status.HTTP_403_FORBIDDEN,
             detail="Forbidden access"
         )
-    
+
     task = update_assigned_task(db, task, update_data)
     return _to_response(task, db)
 
