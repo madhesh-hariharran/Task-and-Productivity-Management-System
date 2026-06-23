@@ -11,6 +11,7 @@ def create_assigned_task(db: Session, assigner_id: int, assigned_task_data: Crea
         priority = assigned_task_data.priority,
         deadline = assigned_task_data.deadline,
         is_assigned = True,
+        user_id=None,
         assigner_id =  assigner_id,
         assignee_id = assigned_task_data.assignee_id,
     )
@@ -40,17 +41,28 @@ def get_assigned_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.query(Task).filter(Task.id == task_id, Task.is_assigned == True).first()
 
 def update_assigned_task(db: Session, task: Task, update_data: UpdateAssignedTask) -> Task:
-    if update_data.title is not None:
+    # model_fields_set contains only fields explicitly sent in the request body.
+    # This is the only reliable way to distinguish two different cases:
+    #   - Field not sent at all (e.g. only updating status) → skip it, keep old value
+    #   - Field sent as null (e.g. user cleared description) → set it to None in DB
+    # Without this, "if value is not None" would skip null updates entirely
+    sent = update_data.model_fields_set
+
+    if "title" in sent and update_data.title is not None:
         task.title = update_data.title
-    if update_data.description is not None:
+
+    if "description" in sent:
+        # No null guard — null is valid here, it means "clear the description"
         task.description = update_data.description
-    if update_data.priority is not None:
+
+    if "priority" in sent and update_data.priority is not None:
         task.priority = update_data.priority
-    if update_data.deadline is not None:
+
+    if "deadline" in sent:
+        # No null guard — null is valid here, it means "clear the deadline"
         task.deadline = update_data.deadline
 
-    # status and is_completed are kept in sync - same logic as personal task_repository
-    if update_data.status is not None:
+    if "status" in sent and update_data.status is not None:
         task.status = update_data.status
         if update_data.status == StatusEnum.COMPLETED:
             task.is_completed = True
@@ -59,7 +71,7 @@ def update_assigned_task(db: Session, task: Task, update_data: UpdateAssignedTas
             task.is_completed = False
             task.completed_at = None
 
-    if update_data.is_completed is not None:
+    if "is_completed" in sent and update_data.is_completed is not None:
         task.is_completed = update_data.is_completed
         if update_data.is_completed:
             task.status = StatusEnum.COMPLETED
@@ -68,7 +80,7 @@ def update_assigned_task(db: Session, task: Task, update_data: UpdateAssignedTas
             if task.status == StatusEnum.COMPLETED:
                 task.status = StatusEnum.TODO
             task.completed_at = None
-        
+
     db.commit()
     db.refresh(task)
     return task

@@ -7,7 +7,9 @@ import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import DashboardPage from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
+import AssignedTasks from "./pages/AssignedTasks";
 
+// Separated so it can use useAuth (which needs AuthProvider above it in the tree)
 function AppRoutes() {
   const { user, isLoading }  = useAuth()
 
@@ -16,25 +18,21 @@ function AppRoutes() {
 
   return (
     <>
-
       {user && <Navbar />}
 
       <Routes>
-
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<Tasks />} />
-          {/* <Route path="/assigned-tasks" element={<AssignedTasks/>} /> */}
+          <Route path="/assigned-tasks" element={<AssignedTasks/>} />
           {/* <Route path="/reminders" element={<Reminders />} /> */}
         </Route>
 
         <Route path="*" element={<Navigate to="/login" />} />
-
       </Routes>
-
     </>
   );
 }
