@@ -1,4 +1,3 @@
-import { GroupBy } from './../utils/assignedTaskGrouping';
 import type { Priority, Status } from "./task"
 
 export type GroupBy = "person" | "priority" | "status"
